@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nemitra AI | Cybersecurity MVP</title>
+    <style>
+        /* --- DESIGN SYSTEM ---
+        */
+        :root {
+            --bg-dark: #0f172a;
+            --bg-card: #1e293b;
+            --accent-primary: #38bdf8;
+            --accent-secondary: #818cf8;
+            --text-main: #f1f5f9;
+            --text-muted: #94a3b8;
+            --success: #22c55e;
+            --warning: #eab308;
+            --danger: #ef4444;
+            --transition: all 0.3s ease;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            line-height: 1.6;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* --- LAYOUT ---
+        */
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 2rem;
+            flex-grow: 1;
+        }
+
+        header {
+            text-align: center;
+            padding: 3rem 0;
+            border-bottom: 1px solid #ffffff10;
+        }
+
+        .logo {
+            font-size: 2.5rem;
+            font-weight: 800;
+            background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: -1px;
+        }
+
+        .tagline {
+            color: var(--text-muted);
+            font-size: 1rem;
+            margin-top: 0.5rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        /* --- COMPONENTS ---
+        */
+        .card {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 2rem;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+            margin-bottom: 2rem;
+            border: 1px solid #ffffff05;
+        }
+
+        .scan-section {
+            display: flex;
+            gap: 10px;
+            margin-top: 2rem;
+        }
+
+        input[type="text"] {
+            flex-grow: 1;
+            padding: 1rem 1.5rem;
+            border-radius: 8px;
+            border: 2px solid #334155;
+            background: #0f172a;
+            color: white;
+            font-size: 1rem;
+            transition: var(--transition);
+        }
+
+        input[type="text"]:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 0 4px rgba(56, 189, 248, 0.1);
+        }
+
+        button {
+            padding: 1rem 2rem;
+            border-radius: 8px;
+            border: none;
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            opacity: 0.9;
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* --- RESULTS SECTION ---
+        */
+        #resultArea {
+            display: none;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .risk-meter-container {
+            text-align: center;
+            margin: 1.5rem 0;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 12px;
+            background: #334155;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-top: 10px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            width: 0%;
+            transition: width 1s ease-in-out;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 0.5rem 1rem;
+            border-radius: 50px;
+            font-weight: bold;
+            font-size: 0.8rem;
+            margin-bottom: 1rem;
+        }
+
+        .reason-list {
+            list-style: none;
+            margin-top: 1rem;
+        }
+
+        .reason-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+            color: var(--text-muted);
+        }
+
+        .reason-item::before {
+            content: "•";
+            color: var(--accent-primary);
+            font-size: 1.5rem;
+        }
+
+        /* --- HISTORY & TABLES ---
+        */
+        .history-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+            font-size: 0.9rem;
+        }
+
+        .history-table th {
+            text-align: left;
+            color: var(--text-muted);
+            padding: 12px;
+            border-bottom: 1px solid #334155;
+        }
+
+        .history-table td {
+            padding: 12px;
+            border-bottom: 1px solid #1e293b;
+        }
+
+        .url-cell {
+            max-width: 250px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* --- UTILS ---
+        */
+        .loader {
+            display: block;
+            width: 24px;
+            height: 24px;
+            border: 3px solid #ffffff30;
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem auto;
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        footer {
+            text-align: center;
+            padding: 2rem;
+            color: var(--text-muted);
+            font-size: 0.8rem;
+            border-top: 1px solid #ffffff05;
+        }
+
+        .report-btn {
+            background: transparent;
+            border: 1px solid #334155;
+            font-size: 0.8rem;
+            margin-top: 1rem;
+        }
+
+        /* Responsive */
+        @media (max-width: 600px) {
+            .scan-section { flex-direction: column; }
+            .container { padding: 1rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="logo">Nemitra AI</div>
+        <div class="tagline">Your Visionary Friend That Sees Threats Before You Do</div>
+        <div class="tagline">Think Before You Click</div>
+    </header>
+
+    <div class="container">
+        
+        <section class="card">
+            <h3>Advanced URL Analysis</h3>
+            <p style="color: var(--text-muted); font-size: 0.9rem;">Scan links for phishing, malware, or suspicious patterns using our heuristic engine.</p>
+            <div class="scan-section">
+                <input type="text" id="urlInput" placeholder="https://example-secure-login.com/..." autofocus>
+                <button id="scanBtn" onclick="startScan()">Scan Now</button>
+            </div>
+        </section>
+
+        <div id="loader" style="text-align:center; margin-bottom:1rem; display:none;">
+            <div class="loader"></div>
+            <div id="loaderText" style="margin-top:10px; color: var(--text-muted); font-size: 0.9rem;">
+                Initializing analysis...
+            </div>
+        </div>
+
+
+        <section id="resultArea" class="card">
+            <div id="statusBadge" class="status-badge"></div>
+            <h2 id="resultTitle">Analysis Complete</h2>
+            
+            <div class="risk-meter-container">
+                <div style="display: flex; justify-content: space-between; font-size: 0.8rem;">
+                    <span>Risk Score</span>
+                    <span id="scoreText">0/100</span>
+                </div>
+                <div class="progress-bar">
+                    <div id="progressFill" class="progress-fill"></div>
+                </div>
+            </div>
+
+            <div id="reasonsContainer">
+                <ul class="reason-list" id="reasonList">
+                    </ul>
+            </div>
+
+            <button class="report-btn" onclick="reportFalsePositive()">Report Wrong Detection</button>
+        </section>
+
+        <section class="card">
+            <h3>Recent Scan History</h3>
+            <div style="overflow-x: auto;">
+                <table class="history-table">
+                    <thead>
+                        <tr>
+                            <th>URL</th>
+                            <th>Status</th>
+                            <th>Score</th>
+                            <th>Time</th>
+                        </tr>
+                    </thead>
+                    <tbody id="historyBody">
+                        </tbody>
+                </table>
+            </div>
+        </section>
+
+    </div>
+
+    <footer>
+        Nemitra AI – Imagine Cup 2026 MVP | Built for Cybersecurity Innovation
+    </footer>
+
+    <script>
+        /*
+        --- CORE LOGIC ---
+        */
+
+        const scanBtn = document.getElementById('scanBtn');
+        const urlInput = document.getElementById('urlInput');
+        const loader = document.getElementById('loader');
+        const loaderText = document.getElementById('loaderText');
+        const resultArea = document.getElementById('resultArea');
+        const historyBody = document.getElementById('historyBody');
+
+        // Initialize App
+        window.onload = () => {
+            loadHistory();
+        };
+
+            const loaderMessages = [
+            "🔍 Analyzing with Azure AI models...",
+            "🧠 Checking phishing patterns...",
+            "🧪 Evaluating risk score...",
+            "🔐 Inspecting URL structure...",
+            "📊 Finalizing security verdict..."
+            ];
+
+            let loaderInterval = null;
+
+            function startLoaderAnimation() {
+            let index = 0;
+            loaderText.innerText = loaderMessages[0];
+            loaderInterval = setInterval(() => {
+            index = (index + 1) % loaderMessages.length;
+            loaderText.innerText = loaderMessages[index];
+            }, 500);
+        }
+
+        function stopLoaderAnimation() {
+        clearInterval(loaderInterval);
+        }
+
+
+        // ================================
+        // AZURE AI INTEGRATION (DECOY MODE)
+        // ================================
+        async function analyzeWithAzureAI(url) {
+        // Simulate cloud API delay
+        await new Promise(resolve => setTimeout(resolve, 800));
+        // In production this would call:
+        // - Azure OpenAI (text & URL analysis)
+        // - Azure AI Vision (website screenshot analysis)
+        // via Azure Functions API
+        // For MVP / Decoy:
+        const result = performAIHeuristics(url);
+        // Add a fake Azure confidence layer
+        result.reasons.unshift("Analyzed using Azure AI Security Models (simulated)");
+        return result;
+        }
+
+
+        async function startScan() {
+            const url = urlInput.value.trim();
+            if (!url) {
+                alert("Please enter a valid URL to analyze.");
+                return;
+            }
+
+            // UI State: Loading
+            scanBtn.disabled = true;
+            loader.style.display = "block";
+            startLoaderAnimation();
+            resultArea.style.display = "none";
+
+            // Simulate AI Processing Delay
+            await new Promise(resolve => setTimeout(resolve, 1500));
+
+            const analysis = await analyzeWithAzureAI(url);
+            displayResults(analysis, url);
+            saveToHistory(url, analysis);
+
+            // Reset UIstopLoaderAnimation();
+            stopLoaderAnimation();
+            loader.style.display = "none";
+            scanBtn.disabled = false;
+        }
+        
+        /*--- HEURISTIC ENGINE ---
+        This simulates basic AI pattern matching
+        */
+        function performAIHeuristics(url) {
+            let score = 0;
+            let reasons = [];
+            const lowerUrl = url.toLowerCase();
+    
+
+            // 1. Check for sensitive keywords
+            const keywords = ['login', 'verify', 'update', 'bank', 'secure', 'account', 'free', 'bonus', 'gift', 'wp-admin', 'support', 'help', 'service', 'security', 'confirm'];
+            const trustedDomains = ["google.com", "microsoft.com", "github.com"];
+            const exactTrustedDomains = [
+                                            "canarabank.com",
+                                            "sbi.co.in",
+                                            "hdfcbank.com",
+                                            "icicibank.com"
+                                        ];
+
+            // 1️⃣ Exact trusted domains → big trust bonus
+            exactTrustedDomains.forEach(domain => {
+            if (lowerUrl.includes(domain)) {
+                score -= 30;
+                reasons.push(`Official bank domain detected: ${domain}`);
+                }
+            });
+
+            // 2️⃣ RBI .bank.in TLD → small trust bonus (not full trust)
+            if (lowerUrl.endsWith(".bank.in") || lowerUrl.includes(".bank.in/")) {
+                score -= 5;
+                reasons.push("RBI regulated .bank.in domain detected");
+            }
+
+
+            keywords.forEach(word => {
+                if (lowerUrl.includes(word)) {
+                    score += 15;
+                    reasons.push(`Contains high-risk keyword: "${word}"`);
+                }
+            });
+
+        // Brand impersonation detection
+        const brandDomains = {
+        "instagram": "instagram.com",
+        "facebook": "facebook.com",
+        "paypal": "paypal.com",
+        "google": "google.com",
+        "sbi": "sbi.co.in",
+        "canara": "canarabank.com",
+        "hdfc": "hdfcbank.com",
+        "icici": "icicibank.com"
+        };
+
+        Object.keys(brandDomains).forEach(brand => {
+            if (lowerUrl.includes(brand) && !lowerUrl.includes(brandDomains[brand])) {
+                score += 40;
+                reasons.push(`Possible ${brand} brand impersonation detected`);
+            }
+        });
+            // 1.2 Trusted domain reputation check (reduce false positives)
+            trustedDomains.forEach(domain => {
+            if (lowerUrl.includes(domain)) {
+            score -= 20;
+            reasons.push(`Trusted domain detected: ${domain}`);
+            }
+            });
+
+
+            // 2. URL Length
+            if (url.length > 75) {
+                score += 10;
+                reasons.push("Unusually long URL structure");
+            }
+
+            // 3. Suspicious Characters / Punycode
+            if (url.includes('@')) {
+                score += 50;
+                reasons.push("URL contains '@' symbol (common phishing trick)");
+            }
+
+            if (url.includes('//', 8)) {
+                score += 25;
+                reasons.push("Suspicious double slash usage");
+            }
+
+
+            // 4. TLD Check
+            const suspiciousTLDs = ['.xyz', '.top', '.pw', '.loan', '.zip', '.click', '.help', '.support', '.services', '.site'];
+            suspiciousTLDs.forEach(tld => {
+                if (lowerUrl.endsWith(tld) || lowerUrl.includes(tld + "/")) {
+                    score += 20;
+                    reasons.push(`Suspicious Top-Level Domain detected (${tld})`);
+                }
+            });
+
+            // 5. IP Address Check (Phishing sites often use raw IPs)
+            const ipPattern = /\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/;
+            if (ipPattern.test(url)) {
+                score += 30;
+                reasons.push("URL uses direct IP address instead of domain name");
+            }
+
+            // Cap score at 100
+               score = Math.min(score, 100);
+
+            // Prevent negative score
+               score = Math.max(0, score);
+
+                let status = "SAFE";
+                let color = "var(--success)";
+                if (score >= 40 && score < 70) {
+                    status = "SUSPICIOUS";
+                    color = "var(--warning)";
+                } else if (score >= 70) {
+                    status = "DANGEROUS";
+                    color = "var(--danger)";
+                }
+
+if (reasons.length === 0) reasons.push("No immediate red flags detected.");
+
+return { score, status, color, reasons };
+
+
+        }
+
+        function displayResults(analysis, url) {
+            resultArea.style.display = "block";
+            
+            const badge = document.getElementById('statusBadge');
+            badge.innerText = analysis.status;
+            badge.style.backgroundColor = analysis.color;
+            badge.style.color = (analysis.status === 'SUSPICIOUS') ? '#000' : '#fff';
+
+            document.getElementById('scoreText').innerText = `${analysis.score}/100`;
+            
+            const fill = document.getElementById('progressFill');
+            fill.style.width = analysis.score + "%";
+            fill.style.backgroundColor = analysis.color;
+
+            const list = document.getElementById('reasonList');
+            list.innerHTML = analysis.reasons.map(r => `<li class="reason-item">${r}</li>`).join('');
+            
+            resultArea.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        /*
+        --- DATA PERSISTENCE ---
+        */
+        function saveToHistory(url, analysis) {
+            const history = JSON.parse(localStorage.getItem('phishnet_history') || '[]');
+            const entry = {
+                url,
+                status: analysis.status,
+                score: analysis.score,
+                time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+            };
+            
+            history.unshift(entry);
+            const limitedHistory = history.slice(0, 5); // Keep last 5
+            localStorage.setItem('phishnet_history', JSON.stringify(limitedHistory));
+            loadHistory();
+        }
+
+        function loadHistory() {
+            const history = JSON.parse(localStorage.getItem('phishnet_history') || '[]');
+            historyBody.innerHTML = history.map(item => `
+                <tr>
+                    <td class="url-cell" title="${item.url}">${item.url}</td>
+                    <td><span style="color: ${item.status === 'SAFE' ? 'var(--success)' : item.status === 'SUSPICIOUS' ? 'var(--warning)' : 'var(--danger)'}; font-weight: bold;">${item.status}</span></td>
+                    <td>${item.score}</td>
+                    <td>${item.time}</td>
+                </tr>
+            `).join('');
+
+            if (history.length === 0) {
+                historyBody.innerHTML = `<tr><td colspan="4" style="text-align:center; color: var(--text-muted);">No recent scans</td></tr>`;
+            }
+        }
+
+        function reportFalsePositive() {
+            const reports = JSON.parse(localStorage.getItem('phishnet_reports') || '[]');
+            reports.push({
+                url: urlInput.value,
+                timestamp: new Date().toISOString()
+            });
+            localStorage.setItem('phishnet_reports', JSON.stringify(reports));
+            alert("Thank you! This URL has been flagged for manual review to improve our AI model.");
+        }
+    </script>
+</body>
+</html>
